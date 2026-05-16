@@ -22,6 +22,18 @@ WIKI FOR MORE DETAILS:  https://github.com/pa3gsb/Radioberry-2.x/wiki
 	![Radioberry-2.x](docs/gallery/radioberry-open-incase-small.jpg)
 	
 
+## Powered by Raspberry Pi
+
+Radioberry is designed to run on Raspberry Pi hardware and is licensed to use the official “Powered by Raspberry Pi” logo.
+
+Raspberry Pi is a trademark of Raspberry Pi Ltd.
+
+<p align="center">
+  <img src="docs/assets/powered-by-raspberry-pi.png" alt="Powered by Raspberry Pi" width="220">
+</p>
+
+
+
 ## Building
 
 ### Install dependencies
