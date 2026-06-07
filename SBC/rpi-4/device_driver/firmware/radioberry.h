@@ -26,7 +26,7 @@
 #include <netinet/tcp.h>
 
 
-#define FIRMWAREVERSION "2025.10.25"
+#define FIRMWAREVERSION "2026.06.07"
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
@@ -48,6 +48,8 @@ int sys_temp = 0; //rpi-temperature.
 int pa_temp = 0;
 int pa_current = 0;
 int pa_temp_ok = 1;
+int fwd = 0;
+int rev = 0;
 
 //ringbuffer for handling SPI commands.
 #define CAPACITY 64

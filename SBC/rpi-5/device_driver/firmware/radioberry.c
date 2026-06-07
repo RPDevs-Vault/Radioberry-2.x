@@ -426,8 +426,28 @@ static void fillPacketToSend(void) {
 		memcpy(hpsdrdata + 520, sync_hpsdrdata, 8);
 		
 		if (lnrx != nrx) usleep(1000);
-
 		lnrx = nrx;
+		
+	/*
+				C0	
+					[7] 	ACK==0
+					[6:3]	RADDR[3:0]
+					[2]		Dot
+					[1]		Dash
+					[0]		PTT
+
+				C1	[7:0]	RDATA[31:24]
+				C2	[7:0]	RDATA[23:16]
+				C3	[7:0]	RDATA[15:8]
+				C4	[7:0]	RDATA[7:0]
+
+
+				ADDR	RDATA	Description
+				0x01	[31:16]	Temperature
+				0x01	[15:0]	Forward Power
+				0x02	[31:16]	Reverse Power
+				0x02	[15:0]	Current
+    */
 
 		int factor = (lnrx - 1) * 6;
 		for (int frame = 0; frame < 2; frame++) {
@@ -457,12 +477,16 @@ static void fillPacketToSend(void) {
 				if (i2c_measure_module_active) {
 					hpsdrdata[12 + coarse_pointer] = ((pa_temp >> 8) & 0xFF); 
 					hpsdrdata[13 + coarse_pointer] = (pa_temp & 0xFF); 
+					hpsdrdata[14 + coarse_pointer] = ((fwd >> 8) & 0xFF);
+					hpsdrdata[15 + coarse_pointer] = (fwd & 0xFF);
 				} else {
 					hpsdrdata[12 + coarse_pointer] = ((sys_temp >> 8) & 0xFF);
 					hpsdrdata[13 + coarse_pointer] = (sys_temp & 0xFF);
 				}
 			} else {
 				hpsdrdata[11 + coarse_pointer] = 0x10 | (rb_control & 0x07); 
+				hpsdrdata[12 + coarse_pointer] = ((rev >> 8) & 0xFF);
+				hpsdrdata[13 + coarse_pointer] = (rev & 0xFF);
 				hpsdrdata[14 + coarse_pointer] = ((pa_current >> 8) & 0xFF); 
 				hpsdrdata[15 + coarse_pointer] = (pa_current & 0xFF); 
 			}
@@ -512,7 +536,7 @@ static void *rb_measure_thread(void *arg) {
 	int measured_temp_ok_count = 0;
 	while(1) {
 		sem_wait(&i2c_meas); 
-		if (i2c_measure_module_active) read_I2C_measure(&pa_current, &pa_temp);
+		if (i2c_measure_module_active) read_I2C_measure(&pa_current, &pa_temp, &fwd, &rev);
 		if (pa_temp_ok && (pa_temp >= 1256)) {
 			fprintf(stderr, "ALERT: temperature of PA is higher than 50ºC; PA will be switched off! \n");
 			pa_temp_ok = 0;
