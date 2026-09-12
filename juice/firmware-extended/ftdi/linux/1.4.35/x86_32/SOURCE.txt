@@ -1,0 +1,4 @@
+Archive: libftd2xx-linux-x86_32-1.4.35.tgz
+SHA256: 41adda6464dfa8f5ac1a3c577964f1515cdc63c77d4709cf11411aa2d510d370
+Imported from the user's Downloads folder.
+The versioned .so alias is stored as an identical regular file for Windows checkout compatibility.

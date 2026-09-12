@@ -1,0 +1,64 @@
+SHELL := /bin/sh
+.DEFAULT_GOAL := all
+CC = gcc
+COMPILER_TARGET := $(shell $(CC) -dumpmachine)
+ifneq ($(filter aarch64%,$(COMPILER_TARGET)),)
+ARCH ?= aarch64
+else ifneq ($(filter arm%,$(COMPILER_TARGET)),)
+ARCH ?= armhf
+else ifneq ($(filter x86_64%,$(COMPILER_TARGET)),)
+ARCH ?= x86_64
+else ifneq ($(filter i386% i486% i586% i686%,$(COMPILER_TARGET)),)
+ARCH ?= x86_32
+endif
+ifeq ($(filter $(ARCH),x86_64 x86_32 aarch64 armhf),)
+$(error Onbekende architectuur; gebruik ARCH=x86_64, x86_32, aarch64 of armhf)
+endif
+FTDI_VERSION := 1.4.35
+FTDI_DIR := ftdi/linux/$(FTDI_VERSION)/$(ARCH)
+FTDI_LIB := $(FTDI_DIR)/lib/libftd2xx.so
+BUILD_DIR := build/linux/$(ARCH)
+DIST_DIR := dist/linux-$(ARCH)
+PROGRAM := $(DIST_DIR)/radioberry-juice
+SOURCES := radioberry.c gateware.c stream.c register.c pa.c
+OBJECTS := $(addprefix $(BUILD_DIR)/,$(SOURCES:.c=.o))
+CPPFLAGS += -I$(FTDI_DIR)/include
+CFLAGS ?= -O3 -g
+CFLAGS += -std=gnu11 -pthread
+LDFLAGS += -L$(FTDI_DIR)/lib -Wl,-rpath,'$$ORIGIN/lib'
+LDLIBS += -lftd2xx -pthread -lm -lrt
+.PHONY: all check info clean
+FTDI_DOCS := README.pdf release-notes.txt SOURCE.txt
+DIST_DOCS := $(addprefix $(DIST_DIR)/ftdi/,$(FTDI_DOCS))
+all: check $(PROGRAM) $(DIST_DIR)/lib/libftd2xx.so $(DIST_DIR)/radioberry.rbf $(DIST_DIR)/radioberry.props $(DIST_DOCS) $(DIST_DIR)/ftdi/ftd2xx.h $(DIST_DIR)/install-linux.sh
+check:
+	@command -v $(CC) >/dev/null || { echo "Compiler ontbreekt: $(CC)"; exit 1; }
+	@case "$(COMPILER_TARGET)" in *linux*) ;; *) echo "Gebruik een Linux-compiler: $(COMPILER_TARGET)"; exit 1 ;; esac
+	@test -f "$(FTDI_DIR)/include/ftd2xx.h" && test -f "$(FTDI_DIR)/include/WinTypes.h" || { echo "FTDI-headers ontbreken: $(FTDI_DIR)/include"; exit 1; }
+	@test -f "$(FTDI_LIB)" || { echo "FTDI-library ontbreekt: $(FTDI_LIB)"; exit 1; }
+info:
+	@echo "Compiler: $(CC) ($(COMPILER_TARGET))"
+	@echo "Architectuur: $(ARCH)"
+	@echo "FTDI: $(FTDI_DIR)"
+	@echo "Resultaat: $(PROGRAM)"
+$(BUILD_DIR) $(DIST_DIR) $(DIST_DIR)/lib $(DIST_DIR)/ftdi:
+	mkdir -p "$@"
+$(BUILD_DIR)/%.o: %.c linux-Makefile | $(BUILD_DIR) check
+	$(CC) $(CPPFLAGS) $(CFLAGS) -MMD -MP -c $< -o $@
+$(PROGRAM): $(OBJECTS) $(FTDI_LIB) linux-Makefile | $(DIST_DIR) check
+	$(CC) $(OBJECTS) $(LDFLAGS) -o $@ $(LDLIBS)
+$(DIST_DIR)/lib/libftd2xx.so: $(FTDI_LIB) | $(DIST_DIR)/lib
+	cp "$<" "$@"
+$(DIST_DIR)/radioberry.rbf: radioberry.rbf | $(DIST_DIR)
+	cp "$<" "$@"
+$(DIST_DIR)/radioberry.props: radioberry.props | $(DIST_DIR)
+	cp "$<" "$@"
+$(DIST_DIR)/install-linux.sh: install-linux.sh | $(DIST_DIR)
+	cp "$<" "$@"
+$(DIST_DIR)/ftdi/%: $(FTDI_DIR)/% | $(DIST_DIR)/ftdi
+	cp "$<" "$@"
+$(DIST_DIR)/ftdi/ftd2xx.h: $(FTDI_DIR)/include/ftd2xx.h | $(DIST_DIR)/ftdi
+	cp "$<" "$@"
+clean:
+	rm -rf "$(BUILD_DIR)" "$(DIST_DIR)"
+-include $(OBJECTS:.o=.d)

@@ -1,0 +1,378 @@
+# Firmware Build Instructions for Windows
+
+For the central Windows and Linux build guide, see [BUILD-README.md](BUILD-README.md).
+
+This document describes how to install and verify the required FTDI drivers and how to build the firmware for 32-bit and 64-bit Windows.
+
+## FTDI Driver
+
+The firmware uses the FTDI D2XX driver.
+
+Useful FTDI resources:
+
+* Installation guides:
+  https://ftdichip.com/document/installation-guides/
+
+* D2XX drivers:
+  https://ftdichip.com/drivers/d2xx-drivers/
+
+* Windows driver package 2.12.36.20:
+  https://ftdichip.com/wp-content/uploads/2025/03/CDM-v2.12.36.20-WHQL-Certified.zip
+
+* Windows driver installer 2.12.36.20:
+  https://ftdichip.com/wp-content/uploads/2025/03/CDM2123620_Setup.zip
+
+## Verify the Installed FTDI Driver
+
+Open **PowerShell** and run:
+
+```powershell
+pnputil /enum-drivers | Select-String -Pattern "FTDI" -Context 5,5
+```
+
+A correct installation of driver version `2.12.36.20` should show entries similar to:
+
+```text
+Published Name:     oem50.inf
+Original Name:      ftdibus.inf
+Provider Name:      FTDI
+Class Name:         USB
+Driver Version:     10/28/2024 2.12.36.20
+
+Published Name:     oem52.inf
+Original Name:      ftdiport.inf
+Provider Name:      FTDI
+Class Name:         Ports
+Driver Version:     10/28/2024 2.12.36.20
+```
+
+The exact `oemXX.inf` numbers can be different on each PC.
+
+## Verify the D2XX DLL
+
+The installed FTDI D2XX library can be checked with:
+
+```powershell
+(Get-Item "$env:WINDIR\System32\ftd2xx.dll").VersionInfo |
+    Select-Object FileVersion, ProductVersion
+```
+
+For driver package `2.12.36.20`, the result should look similar to:
+
+```text
+FileVersion ProductVersion
+----------- --------------
+3.2.21.1    2.12.36.20
+```
+
+## Remove Old FTDI Drivers
+
+If old FTDI driver packages are still installed, they can be removed with `pnputil`.
+
+First determine the correct `oemXX.inf` name:
+
+```powershell
+pnputil /enum-drivers | Select-String -Pattern "FTDI" -Context 5,5
+```
+
+Then remove the unwanted package, for example:
+
+```powershell
+pnputil /delete-driver oem143.inf
+pnputil /delete-driver oem84.inf
+```
+
+The `oemXX.inf` numbers above are only examples. Use the numbers shown on your own system.
+
+If Windows reports that administrator permissions are required, start PowerShell as **Administrator**.
+
+# Building the Firmware
+
+Open a command window in the firmware source folder.
+
+## 64-bit Windows Build
+
+For a clean 64-bit build:
+
+```bash
+make -f windows-Makefile clean
+make -f windows-Makefile ARCH=x64
+```
+
+The default build can also be used if the Makefile defaults to x64:
+
+```bash
+make -f windows-Makefile clean
+make -f windows-Makefile
+```
+
+## 32-bit Windows Build
+
+For a clean 32-bit build:
+
+```bash
+make -f windows-Makefile clean
+make -f windows-Makefile ARCH=x86
+```
+
+# Windows Build Environment
+
+The firmware can be compiled using **MSYS2 / MinGW-w64**.
+
+Download MSYS2 from:
+
+https://www.msys2.org/
+
+The default installation directory is:
+
+```text
+C:\msys64
+```
+
+# 32-bit Build Environment
+
+## 1. Install MSYS2
+
+Install MSYS2 using the default installation directory:
+
+```text
+C:\msys64
+```
+
+## 2. Start MSYS2
+
+Open:
+
+```text
+MSYS2 MSYS
+```
+
+from the Windows Start menu.
+
+## 3. Update MSYS2
+
+Run:
+
+```bash
+pacman -Syu
+```
+
+If MSYS2 asks you to close the terminal, close it.
+
+## 4. Finish the Update
+
+Start **MSYS2 MSYS** again and run:
+
+```bash
+pacman -Syu
+```
+
+Repeat until all packages are up to date.
+
+## 5. Install the 32-bit GCC Toolchain
+
+Install the MinGW 32-bit GCC/G++ toolchain:
+
+```bash
+pacman -S --needed mingw-w64-i686-gcc
+```
+
+## 6. Add MinGW 32-bit to PATH
+
+Open Windows PowerShell and run:
+
+```powershell
+$add = "C:\msys64\mingw32\bin"
+$path = [Environment]::GetEnvironmentVariable("Path", "User")
+$parts = $path -split ";" | Where-Object { $_ }
+
+if ($parts -notcontains $add) {
+    [Environment]::SetEnvironmentVariable(
+        "Path",
+        (($parts + $add) -join ";"),
+        "User"
+    )
+}
+```
+
+Close and reopen the terminal afterwards so the updated `PATH` is loaded.
+
+## 7. Verify GCC
+
+Check that GCC can be found:
+
+```powershell
+gcc --version
+```
+
+You can also check its location:
+
+```powershell
+where.exe gcc
+```
+
+For the 32-bit toolchain, the path should normally point to:
+
+```text
+C:\msys64\mingw32\bin\gcc.exe
+```
+
+## 8. Build
+
+Go to the firmware folder and run:
+
+```bash
+make -f windows-Makefile clean
+make -f windows-Makefile ARCH=x86
+```
+
+# 64-bit Build Environment
+
+The setup for a 64-bit build is similar to the 32-bit environment.
+
+## 1. Install the 64-bit GCC Toolchain
+
+From MSYS2, install:
+
+```bash
+pacman -S --needed mingw-w64-x86_64-gcc
+```
+
+## 2. Add MinGW 64-bit to PATH
+
+Open Windows PowerShell and run:
+
+```powershell
+$add = "C:\msys64\mingw64\bin"
+$path = [Environment]::GetEnvironmentVariable("Path", "User")
+$parts = $path -split ";" | Where-Object { $_ }
+
+if ($parts -notcontains $add) {
+    [Environment]::SetEnvironmentVariable(
+        "Path",
+        (($parts + $add) -join ";"),
+        "User"
+    )
+}
+```
+
+Close and reopen the terminal afterwards.
+
+## 3. Verify GCC
+
+Run:
+
+```powershell
+gcc --version
+```
+
+and:
+
+```powershell
+where.exe gcc
+```
+
+For the 64-bit toolchain, the path should normally point to:
+
+```text
+C:\msys64\mingw64\bin\gcc.exe
+```
+
+## 4. Build
+
+Go to the firmware folder and run:
+
+```bash
+make -f windows-Makefile clean
+make -f windows-Makefile ARCH=x64
+```
+
+or, if x64 is the default architecture:
+
+```bash
+make -f windows-Makefile clean
+make -f windows-Makefile
+```
+
+# Switching Between 32-bit and 64-bit Builds
+
+Make sure the correct MinGW directory occurs first in your Windows `PATH`.
+
+For 32-bit:
+
+```text
+C:\msys64\mingw32\bin
+```
+
+For 64-bit:
+
+```text
+C:\msys64\mingw64\bin
+```
+
+You can check which compiler Windows currently uses with:
+
+```powershell
+where.exe gcc
+```
+
+After switching architectures, always perform a clean build:
+
+```bash
+make -f windows-Makefile clean
+```
+
+Then build the required version:
+
+```bash
+make -f windows-Makefile ARCH=x86
+```
+
+or:
+
+```bash
+make -f windows-Makefile ARCH=x64
+```
+
+# Quick Reference
+
+### 64-bit
+
+```bash
+make -f windows-Makefile clean
+make -f windows-Makefile ARCH=x64
+```
+
+or:
+
+```bash
+make -f windows-Makefile clean
+make -f windows-Makefile
+```
+
+### 32-bit
+
+```bash
+make -f windows-Makefile clean
+make -f windows-Makefile ARCH=x86
+```
+
+### Check FTDI Driver
+
+```powershell
+pnputil /enum-drivers | Select-String -Pattern "FTDI" -Context 5,5
+```
+
+### Check FTDI D2XX Version
+
+```powershell
+(Get-Item "$env:WINDIR\System32\ftd2xx.dll").VersionInfo |
+    Select-Object FileVersion, ProductVersion
+```
+
+### Check Compiler
+
+```powershell
+gcc --version
+where.exe gcc
+```

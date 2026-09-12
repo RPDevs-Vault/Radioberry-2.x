@@ -1,0 +1,92 @@
+ARCH ?= x64
+
+FTDI_VERSION := cdm-2.12.36.20
+PROJECT_DIR := .
+FTDI_DIR := $(PROJECT_DIR)/ftdi/windows/$(FTDI_VERSION)
+INCLUDE_DIR := $(FTDI_DIR)/include
+
+TARGET_BASE := radioberry-juice
+
+SOURCES := \
+	radioberry.c \
+	gateware.c \
+	stream.c \
+	register.c \
+	pa.c
+
+ifeq ($(ARCH),x64)
+CXX := x86_64-w64-mingw32-g++
+FTDI_LIB := $(FTDI_DIR)/lib/x64/ftd2xx.lib
+TARGET := $(TARGET_BASE)-x64.exe
+BUILD_DIR := build/x64
+
+else ifeq ($(ARCH),x86)
+CXX := i686-w64-mingw32-g++
+FTDI_LIB := $(FTDI_DIR)/lib/x86/ftd2xx.lib
+TARGET := $(TARGET_BASE)-x86.exe
+BUILD_DIR := build/x86
+
+else
+$(error Ongeldige ARCH "$(ARCH)"; gebruik ARCH=x64 of ARCH=x86)
+endif
+
+OBJECTS := $(addprefix $(BUILD_DIR)/,$(SOURCES:.c=.o))
+
+CPPFLAGS := \
+	-D_WIN32_WINNT=0x0A00 \
+	-DWINVER=0x0A00 \
+	-I"$(INCLUDE_DIR)"
+
+CXXFLAGS := \
+	-Wwrite-strings \
+	-fpermissive
+
+LDFLAGS :=
+
+LDLIBS := \
+	"$(FTDI_LIB)" \
+	-lwsock32 \
+	-liphlpapi \
+	-lws2_32 \
+	-lpthread
+
+.PHONY: all clean clean-x64 clean-x86 info check
+
+all: check info $(TARGET)
+
+check:
+	@if not exist "$(subst /,\,$(INCLUDE_DIR)/ftd2xx.h)" ( \
+		echo FOUT: ftd2xx.h niet gevonden in $(INCLUDE_DIR) && exit /b 1 \
+	)
+	@if not exist "$(subst /,\,$(FTDI_LIB))" ( \
+		echo FOUT: FTDI library niet gevonden: $(FTDI_LIB) && exit /b 1 \
+	)
+
+info:
+	@echo Building $(TARGET) for $(ARCH)
+	@echo Compiler: $(CXX)
+	@echo FTDI header: $(INCLUDE_DIR)/ftd2xx.h
+	@echo FTDI library: $(FTDI_LIB)
+	@echo Build directory: $(BUILD_DIR)
+
+$(BUILD_DIR):
+	@if not exist "$(subst /,\,$(BUILD_DIR))" mkdir "$(subst /,\,$(BUILD_DIR))"
+
+$(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+
+$(TARGET): $(OBJECTS)
+	$(CXX) $(OBJECTS) $(LDFLAGS) -o $@ $(LDLIBS)
+
+clean-x64:
+	-if exist build\x64 rmdir /S /Q build\x64
+	-del /Q $(TARGET_BASE)-x64.exe 2>NUL
+
+clean-x86:
+	-if exist build\x86 rmdir /S /Q build\x86
+	-del /Q $(TARGET_BASE)-x86.exe 2>NUL
+
+clean:
+	-if exist build rmdir /S /Q build
+	-del /Q $(TARGET_BASE)-x64.exe 2>NUL
+	-del /Q $(TARGET_BASE)-x86.exe 2>NUL

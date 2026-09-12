@@ -1,0 +1,4 @@
+Archive: libftd2xx-linux-arm-v8-1.4.35.tgz
+SHA256: 0fad427ddecf2080b176119875d757681f86fb435ab16763a5fe0866c66e9182
+Imported from the user's Downloads folder.
+The versioned .so alias is stored as an identical regular file for Windows checkout compatibility.
