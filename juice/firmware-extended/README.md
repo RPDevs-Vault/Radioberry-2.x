@@ -59,7 +59,7 @@ Ubuntu in WSL. Windows uses its own driver installation procedure.
 | `*.c`, `*.h` | Host application source code and headers |
 | `linux-Makefile`, `windows-Makefile` | Platform-specific build instructions; select one with `make -f` |
 | [install-linux.sh](install-linux.sh) | Installs a completed Linux build, its local library, launcher, and missing USB rules |
-| `radioberry.rbf` | FPGA gateware loaded by the application; it must match your FPGA |
+| `gateware/CL016/radioberry.rbf`, `gateware/CL025/radioberry.rbf` | FPGA gateware selected by `fpga=CL016` or `fpga=CL025` in `radioberry.props` |
 | `radioberry.props` | Configuration template; see the platform instructions for its active location |
 | `ftdi/linux/1.4.35/` | Linux D2XX headers, libraries, and original FTDI documentation per architecture |
 | `ftdi/windows/cdm-2.12.36.20/` | Windows D2XX headers and import libraries |

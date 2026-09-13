@@ -141,7 +141,8 @@ For Raspberry Pi 64-bit, the resulting directory is:
 dist/linux-aarch64/
 ├── install-linux.sh
 ├── radioberry-juice
-├── radioberry.rbf
+├── gateware/CL016/radioberry.rbf
+├── gateware/CL025/radioberry.rbf
 ├── radioberry.props
 ├── lib/
 │   └── libftd2xx.so
@@ -299,7 +300,7 @@ Follow the configuration section in [BUILD-README.md](BUILD-README.md).
 The current Linux code still reads `/home/pi/.radioberry/radioberry.props`;
 the copy beside the executable is a template, not the active Linux configuration.
 
-Start from the distribution directory so the program can find `radioberry.rbf`:
+Set `fpga=CL016` or `fpga=CL025` in the configuration. Start from the distribution directory so the program can find the selected file under `gateware/`:
 
 ```bash
 ./radioberry-juice

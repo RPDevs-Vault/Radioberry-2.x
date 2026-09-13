@@ -64,7 +64,8 @@ if [[ -z $source_dir ]]; then
     fi
 fi
 source_dir=$(realpath -e -- "$source_dir") || die 'Distribution directory not found; build first.'
-required=(radioberry-juice radioberry.rbf radioberry.props lib/libftd2xx.so
+required=(radioberry-juice radioberry.props lib/libftd2xx.so
+          gateware/CL016/radioberry.rbf gateware/CL025/radioberry.rbf
           ftdi/README.pdf ftdi/release-notes.txt ftdi/SOURCE.txt ftdi/ftd2xx.h)
 for file in "${required[@]}"; do
     [[ -f $source_dir/$file && ! -L $source_dir/$file ]] || die "Missing or symlinked input: $file"

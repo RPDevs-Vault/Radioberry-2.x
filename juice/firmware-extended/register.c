@@ -116,8 +116,13 @@ char* getProperty(char* name) {
 }
 
 void loadRadioberryProps() {
+	static int loaded = 0;
+	if (loaded) return;
+	loaded = 1;
 	#ifndef _WIN32
+		if (access("/home/pi/.radioberry/radioberry.props", F_OK) == 0)
 		loadProperties("/home/pi/.radioberry/radioberry.props");
+		else loadProperties("./radioberry.props");
 	#else
 		loadProperties("./radioberry.props");
 	#endif

@@ -84,12 +84,32 @@ void handle_sigint(int sig)
 }
 
 int load_radioberry_gateware() {
+	loadRadioberryProps();
+	char key[] = "fpga";
+	char *selected = getProperty(key);
+	char type[16] = "";
+	if (selected) {
+		const size_t length = strcspn(selected, "\r\n");
+		if (length < sizeof(type)) memcpy(type, selected, length);
+	}
+	const char *image;
+	if (strcmp(type, "CL016") == 0) {
+		gateware_fpga_type = 1;
+		image = "gateware/CL016/radioberry.rbf";
+	} else if (strcmp(type, "CL025") == 0) {
+		gateware_fpga_type = 2;
+		image = "gateware/CL025/radioberry.rbf";
+	} else {
+		fprintf(stderr, "Set fpga=CL016 or fpga=CL025 in radioberry.props before starting.\n");
+		return -1;
+	}
+	fprintf(stderr, "FPGA %s: loading %s\n", type, image);
 	
 	int ret = 0;
 	
 	time_t gstartTime = clock();
 	
-	ret = load_gateware_image_into_fpga();
+	ret = load_gateware_image_into_fpga(image);
 
 	if (ret < 0) { return ret; };
 

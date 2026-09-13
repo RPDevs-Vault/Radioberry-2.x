@@ -1,7 +1,7 @@
 /*
 	This module loads the gateware for the radioberry into the FPGA.
 	
-	The gateware is present in the radioberry.rbf file.
+	The gateware file is selected using the fpga property.
 	
 	This file will be read and will be transferred via the usb bus, ft2232 chip into the FPGA.
 
@@ -39,7 +39,7 @@
 #define CLEAR_DATA0(s)   (s &= ~(1 << 1))
 #define CLEAR_NCONFIG(s) (s &= ~(1 << 2))
 
-int load_gateware_image_into_fpga(void);
+int load_gateware_image_into_fpga(const char *image);
 
 unsigned long getFirmwareVersion(void);
 

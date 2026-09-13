@@ -48,8 +48,9 @@ libraries of the machine that will run the program.
    ```text
    install-linux.sh
    radioberry-juice
-   radioberry.rbf
    radioberry.props
+   gateware/CL016/radioberry.rbf
+   gateware/CL025/radioberry.rbf
    lib/libftd2xx.so
    ftdi/                 # FTDI documentation and licence text
    ```
@@ -149,7 +150,7 @@ sudo nano /home/pi/.radioberry/radioberry.props
 
 Enter your own details. This fixed path also applies when your username is
 not `pi`; configurable paths have not been implemented yet.
-`radioberry.rbf` is read from the current working directory, so start from
+The selected gateware is read from `gateware/` in the current working directory, so start from
 the distribution directory. Any custom gateware version must match your FPGA.
 
 ## Windows: 64-bit and 32-bit
@@ -189,10 +190,18 @@ For x86, `i686-w64-mingw32-g++` must be available. If GNU Make is named
 | x64 | `ftdi/windows/cdm-2.12.36.20/lib/x64/ftd2xx.lib` | `radioberry-juice-x64.exe` |
 | x86 | `ftdi/windows/cdm-2.12.36.20/lib/x86/ftd2xx.lib` | `radioberry-juice-x86.exe` |
 
-Start from `juice/firmware`, which also contains `radioberry.rbf` and
-`radioberry.props`. The appropriate FTDI D2XX runtime and MinGW runtime DLLs
-must be available. The Windows build does not create a distribution directory
-containing these DLLs.
+The Windows build also creates `dist/windows-x64/` or `dist/windows-x86/`
+with the executable, `radioberry.props`, and both FPGA
+variants under `gateware/CL016/` and `gateware/CL025/`. Start from that
+distribution directory. The appropriate FTDI D2XX runtime and MinGW runtime
+DLLs must still be installed or available through `PATH`; they are not copied
+into the distribution.
+
+For both Windows and Linux, set `fpga=CL016` or `fpga=CL025` in
+`radioberry.props` before starting. On Linux, an existing
+`/home/pi/.radioberry/radioberry.props` takes precedence over the file in
+the working directory. The selected file under `gateware/` is loaded
+automatically. See [gateware notes](gateware/README.md).
 
 Clean an individual Windows target:
 

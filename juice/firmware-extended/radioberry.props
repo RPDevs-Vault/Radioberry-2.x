@@ -1,2 +1,4 @@
 call=<your call>
 locator=<locator>
+# Required: set fpga to CL016 or CL025 before starting.
+fpga=

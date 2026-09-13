@@ -1,4 +1,5 @@
 ARCH ?= x64
+.DEFAULT_GOAL := all
 
 FTDI_VERSION := cdm-2.12.36.20
 PROJECT_DIR := .
@@ -31,6 +32,8 @@ $(error Ongeldige ARCH "$(ARCH)"; gebruik ARCH=x64 of ARCH=x86)
 endif
 
 OBJECTS := $(addprefix $(BUILD_DIR)/,$(SOURCES:.c=.o))
+DIST_DIR := dist/windows-$(ARCH)
+DIST_FILES := radioberry.props gateware/CL016/radioberry.rbf gateware/CL025/radioberry.rbf
 
 CPPFLAGS := \
 	-D_WIN32_WINNT=0x0A00 \
@@ -52,7 +55,15 @@ LDLIBS := \
 
 .PHONY: all clean clean-x64 clean-x86 info check
 
-all: check info $(TARGET)
+all: check info $(DIST_DIR)/$(TARGET) $(addprefix $(DIST_DIR)/,$(DIST_FILES))
+
+$(DIST_DIR)/$(TARGET): $(TARGET)
+	@if not exist "$(subst /,\,$(@D))" mkdir "$(subst /,\,$(@D))"
+	copy /Y "$(subst /,\,$<)" "$(subst /,\,$@)" >NUL
+
+$(addprefix $(DIST_DIR)/,$(DIST_FILES)): $(DIST_DIR)/%: %
+	@if not exist "$(subst /,\,$(@D))" mkdir "$(subst /,\,$(@D))"
+	copy /Y "$(subst /,\,$<)" "$(subst /,\,$@)" >NUL
 
 check:
 	@if not exist "$(subst /,\,$(INCLUDE_DIR)/ftd2xx.h)" ( \

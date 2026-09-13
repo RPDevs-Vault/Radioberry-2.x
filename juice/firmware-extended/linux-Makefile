@@ -30,7 +30,12 @@ LDLIBS += -lftd2xx -pthread -lm -lrt
 .PHONY: all check info clean
 FTDI_DOCS := README.pdf release-notes.txt SOURCE.txt
 DIST_DOCS := $(addprefix $(DIST_DIR)/ftdi/,$(FTDI_DOCS))
-all: check $(PROGRAM) $(DIST_DIR)/lib/libftd2xx.so $(DIST_DIR)/radioberry.rbf $(DIST_DIR)/radioberry.props $(DIST_DOCS) $(DIST_DIR)/ftdi/ftd2xx.h $(DIST_DIR)/install-linux.sh
+DIST_GATEWARE := $(addprefix $(DIST_DIR)/gateware/,CL016/radioberry.rbf CL025/radioberry.rbf)
+all: $(DIST_GATEWARE)
+$(DIST_GATEWARE): $(DIST_DIR)/gateware/%: gateware/%
+	mkdir -p "$(@D)"
+	cp "$<" "$@"
+all: check $(PROGRAM) $(DIST_DIR)/lib/libftd2xx.so $(DIST_DIR)/radioberry.props $(DIST_DOCS) $(DIST_DIR)/ftdi/ftd2xx.h $(DIST_DIR)/install-linux.sh
 check:
 	@command -v $(CC) >/dev/null || { echo "Compiler ontbreekt: $(CC)"; exit 1; }
 	@case "$(COMPILER_TARGET)" in *linux*) ;; *) echo "Gebruik een Linux-compiler: $(COMPILER_TARGET)"; exit 1 ;; esac
@@ -48,8 +53,6 @@ $(BUILD_DIR)/%.o: %.c linux-Makefile | $(BUILD_DIR) check
 $(PROGRAM): $(OBJECTS) $(FTDI_LIB) linux-Makefile | $(DIST_DIR) check
 	$(CC) $(OBJECTS) $(LDFLAGS) -o $@ $(LDLIBS)
 $(DIST_DIR)/lib/libftd2xx.so: $(FTDI_LIB) | $(DIST_DIR)/lib
-	cp "$<" "$@"
-$(DIST_DIR)/radioberry.rbf: radioberry.rbf | $(DIST_DIR)
 	cp "$<" "$@"
 $(DIST_DIR)/radioberry.props: radioberry.props | $(DIST_DIR)
 	cp "$<" "$@"
